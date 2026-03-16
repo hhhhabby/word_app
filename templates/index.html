@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词谐音助记生成器</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📚 单词谐音助记生成器</h1>
+        <p class="subtitle">上传 Excel 单词表，自动从趣记单词 API 获取谐音助记</p>
+        
+        <div class="upload-section">
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <input type="file" name="file" id="file-input" accept=".xlsx,.xls" required>
+                    <label for="file-input" class="file-label">
+                        📁 选择 Excel 文件（需包含"英文"列）
+                    </label>
+                    <span id="file-name" class="file-name">未选择文件</span>
+                </div>
+                <button type="submit" class="submit-btn">上传并生成</button>
+            </form>
+        </div>
+        
+        <!-- 进度显示区域 -->
+        <div id="progress-section" class="progress-section" style="display: none;">
+            <h3>📊 处理进度</h3>
+            
+            <div class="progress-info">
+                <div class="info-item">
+                    <span class="label">总单词数</span>
+                    <span class="value" id="total-words">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">已处理</span>
+                    <span class="value" id="processed-words">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">剩余</span>
+                    <span class="value" id="remaining-words">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">处理时间</span>
+                    <span class="value" id="processing-time">0 秒</span>
+                </div>
+            </div>
+            
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="progress-percentage" id="progress-percentage">0%</div>
+        </div>
+        
+        <div class="tips">
+            <h3>💡 使用说明</h3>
+            <ul>
+                <li>Excel 文件必须包含<strong>"英文"</strong>列</li>
+                <li>支持 .xlsx 和 .xls 格式</li>
+                <li>每个单词查询间隔 2 秒，避免 API 限制</li>
+                <li>处理完成后自动下载结果</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
