@@ -1,5 +1,7 @@
-flask
-pandas
-openpyxl
-requests
-urllib3
+flask==3.0.3
+requests==2.32.3
+pandas==2.2.2
+openpyxl==3.1.5
+pdf2image==1.17.0
+openai==1.52.2
+httpx==0.27.2
