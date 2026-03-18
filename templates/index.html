@@ -3,395 +3,162 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>英语单词表 PDF 识别导出</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word App 功能总览</title>
     <style>
-        body {
-            background: #f3f6fb;
-            color: #1f2d3d;
+        :root {
+            --bg: #f4f7fb;
+            --card: #ffffff;
+            --ink: #1f2937;
+            --muted: #64748b;
+            --blue: #1d4ed8;
+            --red: #dc2626;
+            --line: #dbe4f3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
         }
 
-        .page-wrap {
-            width: 1080px;
-            margin: 24px auto;
+        body {
+            background: radial-gradient(circle at 20% 20%, #eef4ff, #f7f9fd 45%, #f3f6fb);
+            color: var(--ink);
+            min-height: 100vh;
         }
 
-        .title-card {
-            background: linear-gradient(120deg, #165DFF, #3b82f6);
+        .wrap {
+            max-width: 1080px;
+            margin: 48px auto;
+            padding: 0 20px;
+        }
+
+        .hero {
+            background: linear-gradient(125deg, #1d4ed8, #2563eb);
             color: #fff;
-            border-radius: 14px;
-            padding: 24px 28px;
-            box-shadow: 0 12px 30px rgba(22, 93, 255, 0.25);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 20px 38px rgba(37, 99, 235, 0.28);
         }
 
-        .block-card {
-            background: #fff;
-            border-radius: 14px;
+        .hero h1 {
+            font-size: 34px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .hero p {
+            opacity: 0.95;
+            line-height: 1.7;
+        }
+
+        .grid {
+            margin-top: 24px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
             padding: 22px;
-            margin-top: 18px;
-            border: 1px solid #e9edf5;
-            box-shadow: 0 6px 20px rgba(22, 93, 255, 0.06);
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
         }
 
-        .section-title {
-            font-size: 18px;
+        .badge {
+            display: inline-block;
+            font-size: 12px;
             font-weight: 700;
-            margin-bottom: 14px;
-            color: #165DFF;
-        }
-
-        .btn-main {
-            background: #165DFF;
-            border: 1px solid #165DFF;
+            padding: 5px 10px;
+            border-radius: 999px;
+            margin-bottom: 12px;
             color: #fff;
         }
 
-        .btn-main:hover {
-            background: #0f4dd9;
-            border-color: #0f4dd9;
-            color: #fff;
+        .badge-blue {
+            background: var(--blue);
         }
 
-        .status-box {
-            font-weight: 600;
-            color: #165DFF;
-            margin-top: 10px;
+        .badge-red {
+            background: var(--red);
         }
 
-        .error-box {
-            display: none;
-            margin-top: 14px;
-            border-radius: 10px;
-            padding: 10px 14px;
-            background: #fff1f1;
-            border: 1px solid #ffbdbd;
-            color: #c53030;
-            font-weight: 600;
+        .card h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
         }
 
-        .ok-box {
-            display: none;
-            margin-top: 12px;
-            border-radius: 10px;
-            padding: 10px 14px;
-            background: #ecfdf3;
-            border: 1px solid #a7f3c7;
-            color: #106b43;
-            font-weight: 600;
+        .card p {
+            color: var(--muted);
+            line-height: 1.7;
+            min-height: 72px;
         }
 
-        .file-name {
-            margin-top: 8px;
-            color: #334155;
-            font-weight: 600;
-        }
-
-        .guide-step {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .badge-step {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            background: #165DFF;
-            color: #fff;
+        .btn {
+            margin-top: 16px;
+            display: inline-block;
+            text-decoration: none;
             font-weight: 700;
-        }
-
-        .stream-box {
-            margin-top: 12px;
-            background: #f8fbff;
-            border: 1px solid #dbeafe;
+            color: #fff;
             border-radius: 10px;
-            padding: 10px 12px;
+            padding: 10px 16px;
         }
 
-        .stream-title {
-            color: #165DFF;
-            font-weight: 700;
-            margin-bottom: 6px;
+        .btn-blue {
+            background: var(--blue);
+        }
+
+        .btn-red {
+            background: var(--red);
+        }
+
+        .note {
+            margin-top: 22px;
+            color: #475569;
             font-size: 14px;
         }
 
-        .stream-output {
-            min-height: 72px;
-            max-height: 180px;
-            overflow: auto;
-            white-space: pre-wrap;
-            font-size: 13px;
-            color: #1f2937;
-            line-height: 1.5;
+        @media (max-width: 860px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="page-wrap">
-        <div class="title-card">
-            <h2 class="mb-2">英语单词表 PDF 智能识别导出</h2>
-            <div>填写 API 密钥（支持 DeepSeek / 豆包），上传 PDF，一键识别并导出 Excel（零代码使用）</div>
-        </div>
+    <div class="wrap">
+        <section class="hero">
+            <h1>Word App 功能总览</h1>
+            <p>这里是统一入口。系统包含两个互相独立、可单独维护的页面：一个处理 PDF 到 Excel，另一个处理 Excel 批量查询趣记 API 并写回。</p>
+        </section>
 
-        <div class="block-card">
-            <div class="section-title">模块1：API密钥配置</div>
-            <div class="mb-2 text-secondary">DeepSeek：<a href="https://platform.deepseek.com/"
-                    target="_blank">https://platform.deepseek.com/</a>；豆包方舟：<a href="https://console.volcengine.com/ark"
-                    target="_blank">https://console.volcengine.com/ark</a></div>
-            <div class="input-group mb-3">
-                <span class="input-group-text">API密钥</span>
-                <input type="password" id="apiKey" class="form-control" placeholder="DeepSeek: sk-... / 豆包: ark-...">
-                <button class="btn btn-outline-primary" id="btnValidate" type="button">验证密钥有效性</button>
-            </div>
-            <div id="keyResult" class="ok-box"></div>
-        </div>
+        <section class="grid">
+            <article class="card">
+                <span class="badge badge-blue">功能 A</span>
+                <h2>PDF 到 Excel</h2>
+                <p>上传 PDF，配置 API 密钥，调用模型识别后导出 Excel。包含进度条、日志和下载流程。</p>
+                <a class="btn btn-blue" href="{{ url_for('pages.pdf_to_excel_page') }}">进入 PDF 页面</a>
+            </article>
 
-        <div class="block-card">
-            <div class="section-title">模块2：PDF上传</div>
-            <label for="pdfFile" class="form-label">上传英语单词表PDF</label>
-            <input class="form-control" type="file" id="pdfFile" accept="application/pdf">
-            <div class="file-name" id="selectedFile">未选择文件</div>
-            <div class="mt-2 text-secondary">支持双栏排版、扫描件、跨行单词表，识别准确率100%</div>
-        </div>
+            <article class="card">
+                <span class="badge badge-red">功能 B</span>
+                <h2>Excel 趣记写回</h2>
+                <p>上传 Excel（需含“英文”列），批量查询趣记单词 API，并将谐音助记写回新列后下载。</p>
+                <a class="btn btn-red" href="{{ url_for('pages.excel_mnemonic_page') }}">进入 Excel 页面</a>
+            </article>
+        </section>
 
-        <div class="block-card">
-            <div class="section-title">模块3：处理与导出</div>
-            <button class="btn btn-main" id="btnProcess" type="button">
-                <span id="btnText">开始识别并导出Excel</span>
-                <span id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
-                    aria-hidden="true"></span>
-            </button>
-            <a id="downloadBtn" class="btn btn-success ms-2 d-none" download="英语单词表_AI识别版.xlsx">下载Excel文件</a>
-            <div class="status-box" id="statusText">进度：等待开始</div>
-            <div class="progress mt-2" style="height: 20px;">
-                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
-                    style="width: 0%;">0%</div>
-            </div>
-            <div class="stream-box">
-                <div class="stream-title">后端控制台实时输出</div>
-                <div id="streamOutput" class="stream-output">等待任务开始...</div>
-            </div>
-        </div>
-
-        <div class="block-card">
-            <div class="section-title">模块4：错误提示</div>
-            <div id="errorBox" class="error-box"></div>
-        </div>
-
-        <div class="block-card">
-            <div class="section-title">模块5：使用说明</div>
-            <div class="guide-step"><span class="badge-step">1</span><span>填写API密钥</span></div>
-            <div class="guide-step"><span class="badge-step">2</span><span>上传PDF文件</span></div>
-            <div class="guide-step"><span class="badge-step">3</span><span>点击识别并下载Excel</span></div>
-            <hr>
-            <div class="text-secondary">注意事项：识别结果忠于原文，PDF与Excel仅在本次处理过程中使用，不做持久化保存。</div>
-        </div>
+        <p class="note">提示：两项功能路由和模板均已拆分，后续可独立迭代，互不影响。</p>
     </div>
-
-    <script>
-        let pollingTimer = null;
-        let smoothTimer = null;
-        let displayedPercent = 0;
-        let smoothTarget = 0;
-
-        function setProgress(percent) {
-            displayedPercent = Math.max(displayedPercent, Math.min(100, Math.round(percent)));
-            const bar = document.getElementById('progressBar');
-            bar.style.width = displayedPercent + '%';
-            bar.textContent = displayedPercent + '%';
-        }
-
-        function stopSmoothProgress() {
-            if (smoothTimer) {
-                clearInterval(smoothTimer);
-                smoothTimer = null;
-            }
-        }
-
-        function startSmoothProgress() {
-            if (smoothTimer) {
-                return;
-            }
-            smoothTimer = setInterval(() => {
-                if (displayedPercent < smoothTarget) {
-                    setProgress(displayedPercent + 1);
-                }
-            }, 350);
-        }
-
-        function showError(message) {
-            const box = document.getElementById('errorBox');
-            box.style.display = 'block';
-            box.textContent = message;
-        }
-
-        function clearError() {
-            const box = document.getElementById('errorBox');
-            box.style.display = 'none';
-            box.textContent = '';
-        }
-
-        function setProcessingUI(isProcessing) {
-            const btn = document.getElementById('btnProcess');
-            const spinner = document.getElementById('btnSpinner');
-            const text = document.getElementById('btnText');
-            btn.disabled = isProcessing;
-            spinner.classList.toggle('d-none', !isProcessing);
-            text.textContent = isProcessing ? '处理中...' : '开始识别并导出Excel';
-        }
-
-        async function pollProgress() {
-            try {
-                const res = await fetch('/api/progress');
-                const data = await res.json();
-                const total = data.total || 0;
-                const processed = data.processed || 0;
-                const realPercent = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
-                const stage = data.stage || '处理中';
-                const isAiStage = stage.indexOf('调用AI') >= 0;
-                const streamOutput = document.getElementById('streamOutput');
-
-                document.getElementById('statusText').textContent = '进度：' + stage;
-                streamOutput.textContent = data.console_output || data.partial_output || '模型正在思考中...';
-                streamOutput.scrollTop = streamOutput.scrollHeight;
-
-                // 基于后端真实进度兜底
-                setProgress(realPercent);
-
-                // 在 AI 长耗时阶段，前端平滑推进到 92%，减少“卡住”感
-                if (data.is_processing && isAiStage) {
-                    smoothTarget = Math.max(realPercent, 92);
-                    startSmoothProgress();
-                } else {
-                    stopSmoothProgress();
-                }
-
-                if (!data.is_processing && pollingTimer) {
-                    clearInterval(pollingTimer);
-                    pollingTimer = null;
-                    stopSmoothProgress();
-                }
-            } catch (err) {
-                showError('进度读取失败：' + err.message);
-            }
-        }
-
-        document.getElementById('apiKey').addEventListener('input', function () {
-            localStorage.setItem('llm_api_key', this.value);
-        });
-
-        window.addEventListener('DOMContentLoaded', function () {
-            const saved = localStorage.getItem('llm_api_key') || '';
-            document.getElementById('apiKey').value = saved;
-        });
-
-        document.getElementById('pdfFile').addEventListener('change', function (e) {
-            const f = e.target.files[0];
-            document.getElementById('selectedFile').textContent = f ? ('已选择：' + f.name) : '未选择文件';
-        });
-
-        document.getElementById('btnValidate').addEventListener('click', async function () {
-            clearError();
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const resultBox = document.getElementById('keyResult');
-            resultBox.style.display = 'none';
-
-            if (!apiKey) {
-                showError('请先输入API密钥');
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/validate-key', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ api_key: apiKey })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.ok) {
-                    throw new Error(data.message || '密钥验证失败');
-                }
-                resultBox.style.display = 'block';
-                resultBox.textContent = '密钥有效';
-            } catch (err) {
-                showError('API密钥无效，请检查后重新输入：' + err.message);
-            }
-        });
-
-        document.getElementById('btnProcess').addEventListener('click', async function () {
-            clearError();
-            document.getElementById('downloadBtn').classList.add('d-none');
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const file = document.getElementById('pdfFile').files[0];
-
-            if (!apiKey) {
-                showError('请先填写API密钥');
-                return;
-            }
-            if (!file) {
-                showError('请先上传PDF文件');
-                return;
-            }
-            if (!file.name.toLowerCase().endsWith('.pdf')) {
-                showError('仅支持上传PDF文件');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('api_key', apiKey);
-            formData.append('file', file);
-
-            setProcessingUI(true);
-            document.getElementById('statusText').textContent = '进度：正在读取PDF';
-            document.getElementById('streamOutput').textContent = '已提交任务，等待后端日志...';
-            displayedPercent = 0;
-            smoothTarget = 0;
-            setProgress(0);
-            if (!pollingTimer) {
-                pollingTimer = setInterval(pollProgress, 600);
-            }
-
-            try {
-                const res = await fetch('/api/process-pdf', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!res.ok) {
-                    const text = await res.text();
-                    throw new Error(text || '处理失败');
-                }
-
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const dl = document.getElementById('downloadBtn');
-                dl.href = url;
-                dl.classList.remove('d-none');
-                dl.click();
-                document.getElementById('statusText').textContent = '进度：导出完成';
-                stopSmoothProgress();
-                setProgress(100);
-            } catch (err) {
-                showError(err.message || '处理失败');
-                document.getElementById('statusText').textContent = '进度：失败';
-                document.getElementById('streamOutput').textContent = '处理失败，未生成完整输出。';
-            } finally {
-                setProcessingUI(false);
-                if (pollingTimer) {
-                    clearInterval(pollingTimer);
-                    pollingTimer = null;
-                }
-                stopSmoothProgress();
-            }
-        });
-    </script>
 </body>
 
 </html>

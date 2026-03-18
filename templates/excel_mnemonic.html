@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词谐音助记生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #222222;
+        }
+
+        header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 28px;
+            font-weight: 900;
+            color: #222222;
+        }
+
+        .logo i {
+            color: #ff3b30;
+        }
+
+        nav {
+            display: flex;
+            gap: 24px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #222222;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 0;
+            border-bottom: 2px solid transparent;
+        }
+
+        nav a.active {
+            color: #ff3b30;
+            border-bottom: 2px solid #ff3b30;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .auth-buttons a {
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .login-btn {
+            color: #222222;
+        }
+
+        .signup-btn {
+            background-color: #ff3b30;
+            color: #ffffff;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 80px auto;
+            padding: 0 24px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 700;
+            color: #222222;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: #555555;
+            margin-bottom: 48px;
+            line-height: 1.5;
+        }
+
+        .upload-area {
+            background-color: #f9f9f9;
+            border: 2px dashed #cccccc;
+            border-radius: 12px;
+            padding: 60px 40px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #ff3b30;
+            background-color: #fff5f5;
+        }
+
+        .upload-area.dragover {
+            border-color: #ff3b30;
+            background-color: #ffebeb;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background-color: #ff3b30;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            background-color: #e0352b;
+        }
+
+        .upload-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .cloud-options {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .cloud-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: #ff3b30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .cloud-btn:hover {
+            background-color: #e0352b;
+        }
+
+        .drop-hint {
+            font-size: 16px;
+            color: #555555;
+            margin-top: 16px;
+        }
+
+        .hint {
+            margin-top: 32px;
+            font-size: 14px;
+            color: #777777;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <i>❤️</i>
+            <span>WORD</span>
+        </div>
+        <nav>
+            <a href="{{ url_for('pages.index') }}" class="active">功能总览</a>
+            <a href="{{ url_for('pages.pdf_to_excel_page') }}">PDF 到 Excel</a>
+            <a href="{{ url_for('pages.excel_mnemonic_page') }}">Excel 趣记写回</a>
+        </nav>
+        <div class="auth-buttons">
+            <a href="#" class="login-btn">登录</a>
+            <a href="#" class="signup-btn">注册</a>
+        </div>
+    </header>
+
+    <main>
+        <h1>单词谐音助记生成器</h1>
+        <p class="subtitle">上传你的单词 Excel 文件，一键批量查询趣记 API 并写回“趣记单词_谐音助记”列</p>
+
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileInput" class="file-input" accept=".xlsx" required>
+            <button class="upload-btn" id="uploadBtn">选择Excel文件</button>
+            <div class="cloud-options">
+                <div class="cloud-btn" title="从Google Drive选择">📁</div>
+                <div class="cloud-btn" title="从Dropbox选择">☁️</div>
+            </div>
+            <p class="drop-hint">或者直接拖拽文件到这里</p>
+        </div>
+
+        <p class="hint">请确保 Excel 表格中包含标题为 "英文" 的列。<br>处理需要一定时间（每个单词约2秒），请耐心等待。</p>
+    </main>
+
+    <script>
+        const API_PROCESS_EXCEL_URL = "{{ url_for('excel_api.process_excel_file') }}";
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        uploadBtn.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                processFile();
+            }
+        });
+
+        fileInput.addEventListener('change', processFile);
+
+        async function processFile() {
+            const file = fileInput.files[0];
+            if (!file) {
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerText = '正在处理中（每个单词约2秒）...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(API_PROCESS_EXCEL_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = '带谐音助记.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    alert('处理完成！文件已下载。');
+                } else {
+                    const errText = await response.text();
+                    alert('错误：' + errText);
+                }
+            } catch (error) {
+                alert('请求失败，请检查网络或后台服务。');
+                console.error(error);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = '选择Excel文件';
+                fileInput.value = '';
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>英语单词表 PDF 识别导出</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f3f6fb;
+            color: #1f2d3d;
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+        }
+
+        .page-wrap {
+            width: 1080px;
+            margin: 24px auto;
+        }
+
+        .title-card {
+            background: linear-gradient(120deg, #165DFF, #3b82f6);
+            color: #fff;
+            border-radius: 14px;
+            padding: 24px 28px;
+            box-shadow: 0 12px 30px rgba(22, 93, 255, 0.25);
+        }
+
+        .block-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 22px;
+            margin-top: 18px;
+            border: 1px solid #e9edf5;
+            box-shadow: 0 6px 20px rgba(22, 93, 255, 0.06);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #165DFF;
+        }
+
+        .btn-main {
+            background: #165DFF;
+            border: 1px solid #165DFF;
+            color: #fff;
+        }
+
+        .btn-main:hover {
+            background: #0f4dd9;
+            border-color: #0f4dd9;
+            color: #fff;
+        }
+
+        .status-box {
+            font-weight: 600;
+            color: #165DFF;
+            margin-top: 10px;
+        }
+
+        .error-box {
+            display: none;
+            margin-top: 14px;
+            border-radius: 10px;
+            padding: 10px 14px;
+            background: #fff1f1;
+            border: 1px solid #ffbdbd;
+            color: #c53030;
+            font-weight: 600;
+        }
+
+        .ok-box {
+            display: none;
+            margin-top: 12px;
+            border-radius: 10px;
+            padding: 10px 14px;
+            background: #ecfdf3;
+            border: 1px solid #a7f3c7;
+            color: #106b43;
+            font-weight: 600;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .upload-area {
+            background-color: #f9f9f9;
+            border: 2px dashed #cccccc;
+            border-radius: 12px;
+            padding: 56px 40px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #165DFF;
+            background-color: #f1f6ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #165DFF;
+            background-color: #eaf2ff;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background-color: #165DFF;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 30px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            background-color: #0f4dd9;
+        }
+
+        .upload-meta {
+            margin-top: 16px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .guide-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .badge-step {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background: #165DFF;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .stream-box {
+            margin-top: 12px;
+            background: #f8fbff;
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .stream-title {
+            color: #165DFF;
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .stream-output {
+            min-height: 72px;
+            max-height: 180px;
+            overflow: auto;
+            white-space: pre-wrap;
+            font-size: 13px;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-wrap">
+        <div class="title-card">
+            <h2 class="mb-2">英语单词表 PDF 智能识别导出</h2>
+            <div>填写 API 密钥（支持 DeepSeek / 豆包），上传 PDF，一键识别并导出 Excel（零代码使用）</div>
+            <div class="mt-3">
+                <a class="btn btn-light btn-sm me-2" href="{{ url_for('pages.index') }}">返回功能总览</a>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('pages.excel_mnemonic_page') }}">切换到 Excel
+                    批量趣记</a>
+            </div>
+        </div>
+
+        <div class="block-card">
+            <div class="section-title">模块1：API密钥配置</div>
+            <div class="mb-2 text-secondary">DeepSeek：<a href="https://platform.deepseek.com/"
+                    target="_blank">https://platform.deepseek.com/</a>；豆包方舟：<a href="https://console.volcengine.com/ark"
+                    target="_blank">https://console.volcengine.com/ark</a></div>
+            <div class="input-group mb-3">
+                <span class="input-group-text">API密钥</span>
+                <input type="password" id="apiKey" class="form-control" placeholder="DeepSeek: sk-... / 豆包: ark-...">
+                <button class="btn btn-outline-primary" id="btnValidate" type="button">验证密钥有效性</button>
+            </div>
+            <div id="keyResult" class="ok-box"></div>
+        </div>
+
+        <div class="block-card">
+            <div class="section-title">模块2：PDF上传</div>
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="pdfFile" class="file-input" accept="application/pdf">
+                <button class="upload-btn" id="uploadBtn" type="button">选择 PDF 文件</button>
+                <div class="upload-meta">或者直接拖拽 PDF 到这里</div>
+                <div class="file-name" id="selectedFile">未选择文件</div>
+            </div>
+            <div class="mt-2 text-secondary">支持双栏排版、扫描件、跨行单词表。</div>
+        </div>
+
+        <div class="block-card">
+            <div class="section-title">模块3：处理与导出</div>
+            <button class="btn btn-main" id="btnProcess" type="button">
+                <span id="btnText">开始识别并导出Excel</span>
+                <span id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                    aria-hidden="true"></span>
+            </button>
+            <a id="downloadBtn" class="btn btn-success ms-2 d-none" download="英语单词表_AI识别版.xlsx">下载Excel文件</a>
+            <div class="status-box" id="statusText">进度：等待开始</div>
+            <div class="progress mt-2" style="height: 20px;">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                    style="width: 0%;">0%</div>
+            </div>
+            <div class="stream-box">
+                <div class="stream-title">后端控制台实时输出</div>
+                <div id="streamOutput" class="stream-output">等待任务开始...</div>
+            </div>
+        </div>
+
+        <div class="block-card">
+            <div class="section-title">模块4：错误提示</div>
+            <div id="errorBox" class="error-box"></div>
+        </div>
+
+        <div class="block-card">
+            <div class="section-title">模块5：使用说明</div>
+            <div class="guide-step"><span class="badge-step">1</span><span>填写API密钥</span></div>
+            <div class="guide-step"><span class="badge-step">2</span><span>上传PDF文件</span></div>
+            <div class="guide-step"><span class="badge-step">3</span><span>点击识别并下载Excel</span></div>
+            <hr>
+            <div class="text-secondary">注意事项：识别结果忠于原文，PDF与Excel仅在本次处理过程中使用，不做持久化保存。</div>
+        </div>
+    </div>
+
+    <script>
+        const API_PROGRESS_URL = "{{ url_for('pdf_api.get_progress') }}";
+        const API_VALIDATE_KEY_URL = "{{ url_for('pdf_api.api_validate_key') }}";
+        const API_PROCESS_PDF_URL = "{{ url_for('pdf_api.api_process_pdf') }}";
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const pdfFileInput = document.getElementById('pdfFile');
+
+        let pollingTimer = null;
+        let smoothTimer = null;
+        let displayedPercent = 0;
+        let smoothTarget = 0;
+
+        function setProgress(percent) {
+            displayedPercent = Math.max(displayedPercent, Math.min(100, Math.round(percent)));
+            const bar = document.getElementById('progressBar');
+            bar.style.width = displayedPercent + '%';
+            bar.textContent = displayedPercent + '%';
+        }
+
+        function stopSmoothProgress() {
+            if (smoothTimer) {
+                clearInterval(smoothTimer);
+                smoothTimer = null;
+            }
+        }
+
+        function startSmoothProgress() {
+            if (smoothTimer) {
+                return;
+            }
+            smoothTimer = setInterval(() => {
+                if (displayedPercent < smoothTarget) {
+                    setProgress(displayedPercent + 1);
+                }
+            }, 350);
+        }
+
+        function showError(message) {
+            const box = document.getElementById('errorBox');
+            box.style.display = 'block';
+            box.textContent = message;
+        }
+
+        function clearError() {
+            const box = document.getElementById('errorBox');
+            box.style.display = 'none';
+            box.textContent = '';
+        }
+
+        function setProcessingUI(isProcessing) {
+            const btn = document.getElementById('btnProcess');
+            const spinner = document.getElementById('btnSpinner');
+            const text = document.getElementById('btnText');
+            btn.disabled = isProcessing;
+            spinner.classList.toggle('d-none', !isProcessing);
+            text.textContent = isProcessing ? '处理中...' : '开始识别并导出Excel';
+        }
+
+        async function pollProgress() {
+            try {
+                const res = await fetch(API_PROGRESS_URL);
+                const data = await res.json();
+                const total = data.total || 0;
+                const processed = data.processed || 0;
+                const realPercent = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+                const stage = data.stage || '处理中';
+                const isAiStage = stage.indexOf('调用AI') >= 0;
+                const streamOutput = document.getElementById('streamOutput');
+
+                document.getElementById('statusText').textContent = '进度：' + stage;
+                streamOutput.textContent = data.console_output || data.partial_output || '模型正在思考中...';
+                streamOutput.scrollTop = streamOutput.scrollHeight;
+
+                setProgress(realPercent);
+
+                if (data.is_processing && isAiStage) {
+                    smoothTarget = Math.max(realPercent, 92);
+                    startSmoothProgress();
+                } else {
+                    stopSmoothProgress();
+                }
+
+                if (!data.is_processing && pollingTimer) {
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+                    stopSmoothProgress();
+                }
+            } catch (err) {
+                showError('进度读取失败：' + err.message);
+            }
+        }
+
+        document.getElementById('apiKey').addEventListener('input', function () {
+            localStorage.setItem('llm_api_key', this.value);
+        });
+
+        window.addEventListener('DOMContentLoaded', function () {
+            const saved = localStorage.getItem('llm_api_key') || '';
+            document.getElementById('apiKey').value = saved;
+        });
+
+        uploadBtn.addEventListener('click', function () {
+            pdfFileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function () {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function (e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                const droppedFile = e.dataTransfer.files[0];
+                if (!droppedFile.name.toLowerCase().endsWith('.pdf')) {
+                    showError('仅支持上传PDF文件');
+                    return;
+                }
+                pdfFileInput.files = e.dataTransfer.files;
+                document.getElementById('selectedFile').textContent = '已选择：' + droppedFile.name;
+            }
+        });
+
+        pdfFileInput.addEventListener('change', function (e) {
+            const f = e.target.files[0];
+            document.getElementById('selectedFile').textContent = f ? ('已选择：' + f.name) : '未选择文件';
+        });
+
+        document.getElementById('btnValidate').addEventListener('click', async function () {
+            clearError();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const resultBox = document.getElementById('keyResult');
+            resultBox.style.display = 'none';
+
+            if (!apiKey) {
+                showError('请先输入API密钥');
+                return;
+            }
+
+            try {
+                const res = await fetch(API_VALIDATE_KEY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: apiKey })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) {
+                    throw new Error(data.message || '密钥验证失败');
+                }
+                resultBox.style.display = 'block';
+                resultBox.textContent = '密钥有效';
+            } catch (err) {
+                showError('API密钥无效，请检查后重新输入：' + err.message);
+            }
+        });
+
+        document.getElementById('btnProcess').addEventListener('click', async function () {
+            clearError();
+            document.getElementById('downloadBtn').classList.add('d-none');
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const file = pdfFileInput.files[0];
+
+            if (!apiKey) {
+                showError('请先填写API密钥');
+                return;
+            }
+            if (!file) {
+                showError('请先上传PDF文件');
+                return;
+            }
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showError('仅支持上传PDF文件');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('api_key', apiKey);
+            formData.append('file', file);
+
+            setProcessingUI(true);
+            document.getElementById('statusText').textContent = '进度：正在读取PDF';
+            document.getElementById('streamOutput').textContent = '已提交任务，等待后端日志...';
+            displayedPercent = 0;
+            smoothTarget = 0;
+            setProgress(0);
+            if (!pollingTimer) {
+                pollingTimer = setInterval(pollProgress, 600);
+            }
+
+            try {
+                const res = await fetch(API_PROCESS_PDF_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || '处理失败');
+                }
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const dl = document.getElementById('downloadBtn');
+                dl.href = url;
+                dl.classList.remove('d-none');
+                dl.click();
+                document.getElementById('statusText').textContent = '进度：导出完成';
+                stopSmoothProgress();
+                setProgress(100);
+            } catch (err) {
+                showError(err.message || '处理失败');
+                document.getElementById('statusText').textContent = '进度：失败';
+                document.getElementById('streamOutput').textContent = '处理失败，未生成完整输出。';
+            } finally {
+                setProcessingUI(false);
+                if (pollingTimer) {
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+                }
+                stopSmoothProgress();
+            }
+        });
+    </script>
+</body>
+
+</html>
