@@ -183,6 +183,79 @@
             color: #777777;
             line-height: 1.6;
         }
+
+        .progress-panel {
+            max-width: 800px;
+            margin: 24px auto 0;
+            padding: 20px;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            background: #fafafa;
+            text-align: left;
+            display: none;
+        }
+
+        .progress-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #222222;
+            margin-bottom: 12px;
+        }
+
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .progress-item {
+            background: #ffffff;
+            border: 1px solid #ececec;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .progress-item .label {
+            display: block;
+            color: #666666;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .progress-item .value {
+            display: block;
+            color: #222222;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .progress-bar-wrap {
+            height: 14px;
+            width: 100%;
+            background: #ececec;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff3b30, #e0352b);
+            transition: width 0.3s ease;
+        }
+
+        .progress-status {
+            margin-top: 10px;
+            color: #444444;
+            font-size: 14px;
+        }
+
+        @media (max-width: 860px) {
+            .progress-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
     </style>
 </head>
 
@@ -218,14 +291,51 @@
         </div>
 
         <p class="hint">请确保 Excel 表格中包含标题为 "英文" 的列。<br>处理需要一定时间（每个单词约2秒），请耐心等待。</p>
+
+        <section id="progressPanel" class="progress-panel">
+            <div class="progress-title">处理进度</div>
+            <div class="progress-stats">
+                <div class="progress-item">
+                    <span class="label">总单词数</span>
+                    <span class="value" id="totalWords">0</span>
+                </div>
+                <div class="progress-item">
+                    <span class="label">已处理</span>
+                    <span class="value" id="processedWords">0</span>
+                </div>
+                <div class="progress-item">
+                    <span class="label">剩余</span>
+                    <span class="value" id="remainingWords">0</span>
+                </div>
+                <div class="progress-item">
+                    <span class="label">运行秒数</span>
+                    <span class="value" id="elapsedSeconds">0</span>
+                </div>
+            </div>
+            <div class="progress-bar-wrap">
+                <div id="progressBarFill" class="progress-bar-fill"></div>
+            </div>
+            <div id="progressStatus" class="progress-status">等待开始...</div>
+        </section>
     </main>
 
     <script>
         const API_PROCESS_EXCEL_URL = "{{ url_for('excel_api.process_excel_file') }}";
+        const API_PROGRESS_URL = "{{ url_for('pdf_api.get_progress') }}";
 
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
+        const progressPanel = document.getElementById('progressPanel');
+        const totalWordsEl = document.getElementById('totalWords');
+        const processedWordsEl = document.getElementById('processedWords');
+        const remainingWordsEl = document.getElementById('remainingWords');
+        const elapsedSecondsEl = document.getElementById('elapsedSeconds');
+        const progressBarFillEl = document.getElementById('progressBarFill');
+        const progressStatusEl = document.getElementById('progressStatus');
+
+        let progressTimer = null;
+        let startedAtMs = null;
 
         uploadBtn.addEventListener('click', () => fileInput.click());
 
@@ -249,11 +359,80 @@
 
         fileInput.addEventListener('change', processFile);
 
+        function setProgress(percentage) {
+            const value = Math.max(0, Math.min(100, Math.round(percentage)));
+            progressBarFillEl.style.width = value + '%';
+        }
+
+        function startProgressPolling() {
+            progressPanel.style.display = 'block';
+            progressStatusEl.textContent = '正在处理...';
+            setProgress(0);
+            if (progressTimer) {
+                clearInterval(progressTimer);
+            }
+            progressTimer = setInterval(fetchProgress, 600);
+        }
+
+        function stopProgressPolling() {
+            if (progressTimer) {
+                clearInterval(progressTimer);
+                progressTimer = null;
+            }
+        }
+
+        async function fetchProgress() {
+            try {
+                const response = await fetch(API_PROGRESS_URL);
+                const data = await response.json();
+
+                const total = Number(data.total || 0);
+                const processed = Number(data.processed || 0);
+                const remaining = Number(data.remaining || 0);
+
+                totalWordsEl.textContent = total;
+                processedWordsEl.textContent = processed;
+                remainingWordsEl.textContent = remaining;
+
+                if (data.start_time) {
+                    const startMs = new Date(data.start_time).getTime();
+                    if (!Number.isNaN(startMs)) {
+                        startedAtMs = startMs;
+                    }
+                }
+
+                const endMs = data.end_time ? new Date(data.end_time).getTime() : Date.now();
+                if (startedAtMs && !Number.isNaN(endMs)) {
+                    const elapsed = Math.max(0, Math.floor((endMs - startedAtMs) / 1000));
+                    elapsedSecondsEl.textContent = elapsed;
+                }
+
+                const percent = total > 0 ? (processed / total) * 100 : 0;
+                setProgress(percent);
+
+                if (data.is_processing) {
+                    progressStatusEl.textContent = `处理中：${processed}/${total}`;
+                } else {
+                    progressStatusEl.textContent = '处理结束';
+                    stopProgressPolling();
+                }
+            } catch (error) {
+                progressStatusEl.textContent = '进度读取失败';
+            }
+        }
+
         async function processFile() {
             const file = fileInput.files[0];
             if (!file) {
                 return;
             }
+
+            startedAtMs = Date.now();
+            totalWordsEl.textContent = '0';
+            processedWordsEl.textContent = '0';
+            remainingWordsEl.textContent = '0';
+            elapsedSecondsEl.textContent = '0';
+            startProgressPolling();
 
             uploadBtn.disabled = true;
             uploadBtn.innerText = '正在处理中（每个单词约2秒）...';
@@ -268,6 +447,9 @@
                 });
 
                 if (response.ok) {
+                    await fetchProgress();
+                    progressStatusEl.textContent = '处理完成，正在下载文件...';
+                    setProgress(100);
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -278,13 +460,17 @@
                     a.remove();
                     alert('处理完成！文件已下载。');
                 } else {
+                    await fetchProgress();
                     const errText = await response.text();
+                    progressStatusEl.textContent = '处理失败';
                     alert('错误：' + errText);
                 }
             } catch (error) {
+                progressStatusEl.textContent = '请求失败';
                 alert('请求失败，请检查网络或后台服务。');
                 console.error(error);
             } finally {
+                stopProgressPolling();
                 uploadBtn.disabled = false;
                 uploadBtn.innerText = '选择Excel文件';
                 fileInput.value = '';

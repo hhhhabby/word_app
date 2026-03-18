@@ -37,6 +37,8 @@ def process_excel_file():
     try:
         df = pd.read_excel(file)
         if "英文" not in df.columns:
+            progress_data["end_time"] = datetime.now().isoformat()
+            progress_data["is_processing"] = False
             return "Excel 中必须包含'英文'列", 400
 
         words = df["英文"].dropna().tolist()
@@ -68,5 +70,6 @@ def process_excel_file():
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
     except Exception as e:
+        progress_data["end_time"] = datetime.now().isoformat()
         progress_data["is_processing"] = False
         return f"处理出错：{str(e)}", 500
