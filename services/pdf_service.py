@@ -12,35 +12,60 @@ from openai import OpenAI
 from pdf2image import convert_from_bytes
 from pdf2image.exceptions import PDFInfoNotInstalledError
 
-from progress_store import append_console_output, append_partial_output, update_partial_output
+from progress_store import (
+    TaskReplacedError,
+    append_console_output,
+    append_partial_output,
+    ensure_task_active,
+    is_task_active,
+    update_partial_output,
+)
 
 
-def stream_chat_completion_text(client, model, messages, logger, temperature=0):
+def stream_chat_completion_text(client, model, messages, logger, temperature=0, task_id=None):
     """流式获取大模型输出文本，并持续写入进度信息。"""
     chunks = []
     started_at = time.time()
     stop_event = threading.Event()
+    stream_holder = {"stream": None}
 
     def heartbeat():
         while not stop_event.wait(1.0):
+            if task_id is not None and not is_task_active(task_id):
+                stream = stream_holder.get("stream")
+                if stream is not None:
+                    try:
+                        stream.close()
+                    except Exception:
+                        pass
+                break
             elapsed = int(time.time() - started_at)
-            append_partial_output(f"\n[系统] 正在调用模型，已等待 {elapsed} 秒...")
-            append_console_output(f"模型处理中，已等待 {elapsed} 秒", logger)
+            append_partial_output(f"\n[系统] 正在调用模型，已等待 {elapsed} 秒...", task_id=task_id)
+            append_console_output(f"模型处理中，已等待 {elapsed} 秒", logger, task_id=task_id)
 
     hb_thread = threading.Thread(target=heartbeat, daemon=True)
     hb_thread.start()
 
-    update_partial_output("[系统] 已发起流式请求，等待模型返回内容...\n")
-    append_console_output(f"已发起流式请求 model={model}", logger)
+    ensure_task_active(task_id)
+    update_partial_output("[系统] 已发起流式请求，等待模型返回内容...\n", task_id=task_id)
+    append_console_output(f"已发起流式请求 model={model}", logger, task_id=task_id)
     stream = client.chat.completions.create(
         model=model,
         temperature=temperature,
         messages=messages,
         stream=True,
     )
+    stream_holder["stream"] = stream
 
     try:
         for event in stream:
+            if task_id is not None and not is_task_active(task_id):
+                try:
+                    stream.close()
+                except Exception:
+                    pass
+                raise TaskReplacedError("检测到新的上传请求，模型流已中止")
+
             try:
                 delta = event.choices[0].delta.content
             except Exception:
@@ -48,14 +73,15 @@ def stream_chat_completion_text(client, model, messages, logger, temperature=0):
 
             if delta:
                 chunks.append(delta)
-                append_partial_output(delta)
+                append_partial_output(delta, task_id=task_id)
                 if len(chunks) == 1:
-                    append_console_output("已收到首个流式输出分片", logger)
+                    append_console_output("已收到首个流式输出分片", logger, task_id=task_id)
     finally:
         stop_event.set()
 
-    append_partial_output("\n[系统] 模型输出完成，正在整理结果...\n")
-    append_console_output("模型流式输出结束，开始解析 JSON", logger)
+    ensure_task_active(task_id)
+    append_partial_output("\n[系统] 模型输出完成，正在整理结果...\n", task_id=task_id)
+    append_console_output("模型流式输出结束，开始解析 JSON", logger, task_id=task_id)
     return "".join(chunks).strip()
 
 
@@ -120,9 +146,10 @@ def infer_provider(api_key):
     return "doubao"
 
 
-def parse_pdf_with_deepseek(pdf_bytes, api_key, logger):
+def parse_pdf_with_deepseek(pdf_bytes, api_key, logger, task_id=None):
     """提取 PDF 文本后交给 DeepSeek，返回严格 JSON 列表。"""
     poppler_path = find_poppler_path()
+    ensure_task_active(task_id)
     pdf_text = extract_pdf_text(pdf_bytes, poppler_path)
     if not pdf_text:
         current_env = (os.getenv("POPPLER_PATH") or "").strip() or "<未设置>"
@@ -134,6 +161,7 @@ def parse_pdf_with_deepseek(pdf_bytes, api_key, logger):
 
     max_chars = int(os.getenv("PDF_MAX_TEXT_CHARS", "120000"))
     pdf_text = pdf_text[:max_chars]
+    ensure_task_active(task_id)
 
     client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
     messages = [
@@ -160,15 +188,18 @@ def parse_pdf_with_deepseek(pdf_bytes, api_key, logger):
         messages,
         logger,
         temperature=0,
+        task_id=task_id,
     )
+    ensure_task_active(task_id)
     rows = json.loads(content)
     _validate_rows_schema(rows)
     return rows
 
 
-def parse_pdf_with_doubao(pdf_bytes, api_key, logger):
+def parse_pdf_with_doubao(pdf_bytes, api_key, logger, task_id=None):
     """将 PDF 页面转图后提交给豆包多模态模型。"""
     poppler_path = find_poppler_path()
+    ensure_task_active(task_id)
     image_urls = convert_pdf_to_data_urls(pdf_bytes, poppler_path)
     if not image_urls:
         raise ValueError("PDF 转图片失败，无法提交豆包多模态识别")
@@ -190,6 +221,7 @@ def parse_pdf_with_doubao(pdf_bytes, api_key, logger):
     model_id = os.getenv("DOUBAO_MODEL", "doubao-seed-2-0-lite-260215")
     client = OpenAI(api_key=api_key, base_url="https://ark.cn-beijing.volces.com/api/v3")
     try:
+        ensure_task_active(task_id)
         chat_content = []
         for item in content_items:
             if item.get("type") == "input_text":
@@ -208,10 +240,14 @@ def parse_pdf_with_doubao(pdf_bytes, api_key, logger):
             [{"role": "user", "content": chat_content}],
             logger,
             temperature=0,
+            task_id=task_id,
         )
+    except TaskReplacedError:
+        raise
     except Exception as e:
         raise ValueError(f"豆包调用失败（model={model_id}）：{str(e)}")
 
+    ensure_task_active(task_id)
     rows = json.loads(content)
     _validate_rows_schema(rows)
     return rows
