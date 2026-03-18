@@ -22,4 +22,5 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=5001)
+    # 允许处理请求时并发响应进度轮询接口
+    app.run(debug=False, host="0.0.0.0", port=5001, threaded=True)

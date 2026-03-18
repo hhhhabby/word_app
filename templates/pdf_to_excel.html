@@ -59,6 +59,19 @@
             margin-top: 10px;
         }
 
+        .time-box {
+            margin-top: 6px;
+            color: #0f766e;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .hint-box {
+            margin-top: 4px;
+            color: #475569;
+            font-size: 13px;
+        }
+
         .error-box {
             display: none;
             margin-top: 14px;
@@ -224,6 +237,8 @@
             </button>
             <a id="downloadBtn" class="btn btn-success ms-2 d-none" download="英语单词表_AI识别版.xlsx">下载Excel文件</a>
             <div class="status-box" id="statusText">进度：等待开始</div>
+            <div class="time-box" id="elapsedText">运行时长：00:00</div>
+            <div class="hint-box">速度参考：60个单词约1分钟（受PDF质量、页数、模型负载影响）</div>
             <div class="progress mt-2" style="height: 20px;">
                 <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
                     style="width: 0%;">0%</div>
@@ -261,6 +276,40 @@
         let smoothTimer = null;
         let displayedPercent = 0;
         let smoothTarget = 0;
+        let elapsedTimer = null;
+        let startedAt = null;
+
+        function formatElapsed(totalSeconds) {
+            const sec = Math.max(0, Math.floor(totalSeconds));
+            const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+            const ss = String(sec % 60).padStart(2, '0');
+            return mm + ':' + ss;
+        }
+
+        function updateElapsedText() {
+            if (!startedAt) {
+                document.getElementById('elapsedText').textContent = '运行时长：00:00';
+                return;
+            }
+            const seconds = (Date.now() - startedAt) / 1000;
+            document.getElementById('elapsedText').textContent = '运行时长：' + formatElapsed(seconds);
+        }
+
+        function startElapsedTimer() {
+            startedAt = Date.now();
+            updateElapsedText();
+            if (elapsedTimer) {
+                clearInterval(elapsedTimer);
+            }
+            elapsedTimer = setInterval(updateElapsedText, 1000);
+        }
+
+        function stopElapsedTimer() {
+            if (elapsedTimer) {
+                clearInterval(elapsedTimer);
+                elapsedTimer = null;
+            }
+        }
 
         function setProgress(percent) {
             displayedPercent = Math.max(displayedPercent, Math.min(100, Math.round(percent)));
@@ -310,7 +359,7 @@
 
         async function pollProgress() {
             try {
-                const res = await fetch(API_PROGRESS_URL);
+                const res = await fetch(API_PROGRESS_URL, { cache: 'no-store' });
                 const data = await res.json();
                 const total = data.total || 0;
                 const processed = data.processed || 0;
@@ -336,6 +385,16 @@
                     clearInterval(pollingTimer);
                     pollingTimer = null;
                     stopSmoothProgress();
+                    stopElapsedTimer();
+
+                    if (data.start_time && data.end_time) {
+                        const begin = new Date(data.start_time).getTime();
+                        const end = new Date(data.end_time).getTime();
+                        if (!Number.isNaN(begin) && !Number.isNaN(end) && end >= begin) {
+                            const costSec = Math.floor((end - begin) / 1000);
+                            document.getElementById('elapsedText').textContent = '运行时长：' + formatElapsed(costSec);
+                        }
+                    }
                 }
             } catch (err) {
                 showError('进度读取失败：' + err.message);
@@ -440,9 +499,11 @@
             displayedPercent = 0;
             smoothTarget = 0;
             setProgress(0);
+            startElapsedTimer();
             if (!pollingTimer) {
                 pollingTimer = setInterval(pollProgress, 600);
             }
+            pollProgress();
 
             try {
                 const res = await fetch(API_PROCESS_PDF_URL, {
@@ -475,6 +536,8 @@
                     pollingTimer = null;
                 }
                 stopSmoothProgress();
+                stopElapsedTimer();
+                updateElapsedText();
             }
         });
     </script>
