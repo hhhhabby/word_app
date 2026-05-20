@@ -3,8 +3,10 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 
-def fetch_quji_word_data(word):
-    """调用趣记单词接口，返回完整 JSON 数据。"""
+QUIJI_LOOKUP_URL = "https://qujidanci.xieyonglin.com/api/word/lookup.php"
+
+
+def _session_with_retry():
     session = requests.Session()
     retry = Retry(
         total=3,
@@ -14,7 +16,11 @@ def fetch_quji_word_data(word):
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("https://", adapter)
     session.mount("http://", adapter)
+    return session
 
+
+def fetch_quji_word_data(word):
+    """Fetch full word metadata from 趣记单词."""
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -23,14 +29,19 @@ def fetch_quji_word_data(word):
         ),
         "Accept": "application/json, text/javascript, */*; q=0.01",
     }
-    url = f"https://qujidanci.xieyonglin.com/api/word/lookup.php?word={word}"
-    response = session.get(url, headers=headers, timeout=15, verify=False)
+    response = _session_with_retry().get(
+        QUIJI_LOOKUP_URL,
+        params={"word": word},
+        headers=headers,
+        timeout=15,
+        verify=False,
+    )
     response.raise_for_status()
     return response.json()
 
 
 def get_quji_help(word):
-    """从趣记单词 API 获取单个单词的谐音助记。"""
+    """Return pinyin/homophone memory tips for one English word."""
     try:
         json_data = fetch_quji_word_data(word)
         memory_tips = json_data.get("data", {}).get("memory_tips", [])
@@ -38,11 +49,11 @@ def get_quji_help(word):
         for tip in memory_tips:
             method = tip.get("method", "")
             details = tip.get("details", "")
-            if "谐音" in method:
+            if "谐音" in method and details:
                 results.append(details)
 
         if results:
             return "；".join(results)
         return "未找到谐音助记"
-    except Exception as e:
-        return f"查询失败：{str(e)[:30]}"
+    except Exception as exc:
+        return f"查询失败：{str(exc)[:80]}"

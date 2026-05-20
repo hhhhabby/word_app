@@ -7,7 +7,7 @@
     <title>Word App 功能总览</title>
     <style>
         :root {
-            --bg: #f4f7fb;
+            --bg: #f5f7fb;
             --card: #ffffff;
             --ink: #1f2937;
             --muted: #64748b;
@@ -24,9 +24,9 @@
         }
 
         body {
-            background: radial-gradient(circle at 20% 20%, #eef4ff, #f7f9fd 45%, #f3f6fb);
-            color: var(--ink);
             min-height: 100vh;
+            background: var(--bg);
+            color: var(--ink);
         }
 
         .wrap {
@@ -36,11 +36,11 @@
         }
 
         .hero {
-            background: linear-gradient(125deg, #1d4ed8, #2563eb);
+            background: #1f4fd7;
             color: #fff;
-            border-radius: 18px;
+            border-radius: 8px;
             padding: 28px;
-            box-shadow: 0 20px 38px rgba(37, 99, 235, 0.28);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.18);
         }
 
         .hero h1 {
@@ -64,7 +64,7 @@
         .card {
             background: var(--card);
             border: 1px solid var(--line);
-            border-radius: 16px;
+            border-radius: 8px;
             padding: 22px;
             box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
         }
@@ -104,7 +104,7 @@
             text-decoration: none;
             font-weight: 700;
             color: #fff;
-            border-radius: 10px;
+            border-radius: 8px;
             padding: 10px 16px;
         }
 
@@ -138,26 +138,26 @@
     <div class="wrap">
         <section class="hero">
             <h1>Word App 功能总览</h1>
-            <p>这里是统一入口。系统包含两个互相独立、可单独维护的页面：一个处理 PDF 到 Excel，另一个处理 Excel 批量查询趣记 API 并写回。</p>
+            <p>统一处理英语单词资料：把 PDF 单词表识别成 Excel，或给 Excel 单词表批量写回谐音助记。</p>
         </section>
 
         <section class="grid">
             <article class="card">
                 <span class="badge badge-blue">功能 A</span>
                 <h2>PDF 到 Excel</h2>
-                <p>上传 PDF，配置 API 密钥，调用模型识别后导出 Excel。包含进度条、日志和下载流程。</p>
+                <p>上传英语单词表 PDF，输入 DeepSeek 或豆包方舟 API 密钥，系统识别后导出结构化 Excel。</p>
                 <a class="btn btn-blue" href="{{ url_for('pages.pdf_to_excel_page') }}">进入 PDF 页面</a>
             </article>
 
             <article class="card">
                 <span class="badge badge-red">功能 B</span>
                 <h2>Excel 趣记写回</h2>
-                <p>上传 Excel（需含“英文”列），批量查询趣记单词 API，并将谐音助记写回新列后下载。</p>
+                <p>上传包含“英文”列的 Excel，批量查询趣记单词接口，并把谐音助记写入新列后下载。</p>
                 <a class="btn btn-red" href="{{ url_for('pages.excel_mnemonic_page') }}">进入 Excel 页面</a>
             </article>
         </section>
 
-        <p class="note">提示：两项功能路由和模板均已拆分，后续可独立迭代，互不影响。</p>
+        <p class="note">两个功能共用进度接口，页面和后端模块已经拆分，后续可以独立迭代。</p>
     </div>
 </body>
 

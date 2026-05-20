@@ -8,9 +8,22 @@ console_log_buffer = deque(maxlen=400)
 state_lock = threading.Lock()
 active_task_id = 0
 
+progress_data = {
+    "task_id": 0,
+    "total": 0,
+    "processed": 0,
+    "remaining": 0,
+    "start_time": None,
+    "end_time": None,
+    "is_processing": False,
+    "stage": "等待开始",
+    "partial_output": "",
+    "console_output": "",
+}
+
 
 class TaskReplacedError(Exception):
-    """当前任务已被新的上传请求替代。"""
+    """Raised when a newer upload supersedes the current long-running task."""
 
 
 def _is_task_allowed(task_id):
@@ -27,32 +40,17 @@ def ensure_task_active(task_id):
         raise TaskReplacedError("检测到新的上传请求，当前任务已中止")
 
 
-progress_data = {
-    "task_id": 0,
-    "total": 0,
-    "processed": 0,
-    "remaining": 0,
-    "start_time": None,
-    "end_time": None,
-    "is_processing": False,
-    "partial_output": "",
-    "console_output": "",
-}
-
-
 class InMemoryLogHandler(logging.Handler):
-    """将后端日志同步到内存，供前端轮询。"""
+    """Copy backend logs into memory so the frontend can poll them."""
 
     def emit(self, record):
         try:
-            message = self.format(record)
-            console_log_buffer.append(message)
+            console_log_buffer.append(self.format(record))
         except Exception:
             pass
 
 
 def init_log_capture(app):
-    """初始化日志捕获，包含 werkzeug 请求日志。"""
     handler = InMemoryLogHandler()
     handler.setFormatter(logging.Formatter("%(asctime)s %(message)s", "%H:%M:%S"))
 
@@ -121,8 +119,7 @@ def update_partial_output(text, task_id=None):
     with state_lock:
         if not _is_task_allowed(task_id):
             return False
-        max_len = 5000
-        progress_data["partial_output"] = (text or "")[-max_len:]
+        progress_data["partial_output"] = (text or "")[-5000:]
         return True
 
 
@@ -130,16 +127,16 @@ def append_partial_output(text, task_id=None):
     with state_lock:
         if not _is_task_allowed(task_id):
             return False
-        max_len = 5000
         existing = progress_data.get("partial_output", "")
-        progress_data["partial_output"] = (existing + (text or ""))[-max_len:]
+        progress_data["partial_output"] = (existing + (text or ""))[-5000:]
         return True
 
 
-def mark_failed(task_id=None):
+def mark_failed(stage="处理失败", task_id=None):
     with state_lock:
         if not _is_task_allowed(task_id):
             return False
+        progress_data["stage"] = stage
         progress_data["is_processing"] = False
         progress_data["end_time"] = datetime.now().isoformat()
         return True
